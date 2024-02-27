@@ -31,7 +31,7 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
                 );
 
             directoryTreeInfo = new(directoryTreeInfo.FullName + selectedDirectory);
-
+            AnsiConsole.Clear();
         }
         return 0;
     }
@@ -41,8 +41,9 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
         var builder = new StringBuilder();
         builder.Append('\n');
         builder.Append($"Current directory: {directoryTreeInfo.FullName}");
-        builder.Append(string.Format("\n{0} [bold][yellow]Directories[/][/], {1} [bold][dodgerblue2]Files[/][/], [bold][green]{2}[/][/] allocated",
-            directoryTreeInfo.DirectoryCount, directoryTreeInfo.FilesCount, directoryTreeInfo.FormatLength()));
+        builder.Append(
+            string.Format("\n{0} [bold][yellow]Directories[/][/], {1} [bold][dodgerblue2]Files[/][/], [bold][green]{2}[/][/] allocated",
+                directoryTreeInfo.DirectoryCount, directoryTreeInfo.FilesCount, directoryTreeInfo.FormatLength()));
 
         return builder.ToString();
     }

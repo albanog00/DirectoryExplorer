@@ -28,12 +28,12 @@ public class DirectoryTreeInfo
         if (_directoryInfo.Parent is not null)
             builder.Append("\\..");
 
-        foreach (var directory in _directoryInfo.GetDirectories()) {
-            builder.Append($"\n\\{Markup.Escape(directory.Name)}");
-            ++DirectoryCount;
-        }
-
         try {
+            foreach (var directory in _directoryInfo.GetDirectories()) {
+                builder.Append($"\n\\{Markup.Escape(directory.Name)}");
+                ++DirectoryCount;
+            }
+
             foreach (var file in _directoryInfo.GetFiles()) {
                 //builder.AppendLine($"{Markup.Escape(file.Name)} - {FormatLength(file.Length)}");
                 Length += file.Length;
