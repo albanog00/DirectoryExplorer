@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DirectoryTreeExplorer.DirectoryTreeInfo\DirectoryTreeExplorer.DirectoryTreeInfo.csproj" />
-    <ProjectReference Include="..\DirectoryTreeExplorer.Spectre\DirectoryTreeExplorer.Spectre.csproj" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
   </ItemGroup>
 
 </Project>
