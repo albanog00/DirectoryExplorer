@@ -17,20 +17,36 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
 
     public override int Execute(CommandContext context, Settings settings)
     {
+        AnsiConsole.Clear();
         var directoryTreeInfo = new DirectoryTreeInfo(settings.SearchPath);
 
-        while (directoryTreeInfo != null) {
+        while (directoryTreeInfo != null)
+        {
             var tree = directoryTreeInfo.RenderTree().Split("\n");
             var header = RenderHeader(ref directoryTreeInfo);
 
-            var selectedDirectory = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                .PageSize(20)
-                .Title(header)
-                .AddChoices(tree)
-                );
+            var prompt = new SelectionPrompt<string>()
+            {
+                Title = header,
+                PageSize = 20,
+                Converter = a => (
+                    a[0] == '/'
+                        ? $"[yellow]{a}[/]"
+                        : $"[dodgerblue2]{a}[/] - [green]{FormatLength(directoryTreeInfo.GetFileLength(a))}[/]"
+                ),
+            }.AddChoices(tree);
 
-            directoryTreeInfo = new(directoryTreeInfo.FullName + selectedDirectory);
+            var directoryName = AnsiConsole.Prompt(prompt);
+            if (directoryName[0] != '/')
+                continue;
+
+            if (directoryName == "/..") directoryName = directoryTreeInfo.GetParentFullName();
+            else directoryName = directoryTreeInfo.FullName + directoryName;
+
+            if (string.IsNullOrEmpty(directoryName))
+                continue;
+
+            directoryTreeInfo = new DirectoryTreeInfo(directoryName);
             AnsiConsole.Clear();
         }
         return 0;
@@ -39,12 +55,27 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     public string RenderHeader(ref DirectoryTreeInfo directoryTreeInfo)
     {
         var builder = new StringBuilder();
-        builder.Append('\n');
-        builder.Append($"Current directory: {directoryTreeInfo.FullName}");
+        builder.AppendLine($"\nCurrent directory: {directoryTreeInfo.FullName}");
         builder.Append(
-            string.Format("\n{0} [bold][yellow]Directories[/][/], {1} [bold][dodgerblue2]Files[/][/], [bold][green]{2}[/][/] allocated",
-                directoryTreeInfo.DirectoryCount, directoryTreeInfo.FilesCount, directoryTreeInfo.FormatLength()));
+            string.Format("{0} [bold][yellow]Directories[/][/], {1} [bold][dodgerblue2]Files[/][/], [bold][green]{2}[/][/] allocated",
+                directoryTreeInfo.DirectoryCount, directoryTreeInfo.FilesCount, FormatLength(directoryTreeInfo.Length)));
 
         return builder.ToString();
+    }
+
+    public static string FormatLength(long length)
+    {
+        string format;
+        if (length >= 0 && length <= 1023)
+            format = $"{string.Format("{0:0.00}", length)} byte(s)";
+        else if (length >= 1024 && length <= 1_048_575)
+            format = $"{string.Format("{0:0.00}", (double)(length / 1024))} kb(s)";
+        else if (length >= 1_048_576 && length <= 1_073_741_823)
+            format = $"{string.Format("{0:0.00}", (double)(length / 1_048_576))} mb(s)";
+        else if (length >= 1_073_741_824 && length <= 1_099_511_627_775)
+            format = $"{string.Format("{0:0.00}", (double)(length / 1_073_741_824))} gb(s)";
+        else format = $"{string.Format("{0:0.00}", (double)(length / 1_099_511_627_776))} tb(s)";
+
+        return format;
     }
 }
