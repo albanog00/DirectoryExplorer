@@ -18,21 +18,19 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     public override int Execute(CommandContext context, Settings settings)
     {
         AnsiConsole.Clear();
+
         var directoryTreeInfo = new DirectoryTreeInfo(settings.SearchPath);
-
-        while (directoryTreeInfo != null)
-        {
-            var tree = directoryTreeInfo.RenderTree().Split("\n");
+        while (directoryTreeInfo != null) {
             var header = RenderHeader(ref directoryTreeInfo);
+            var tree = directoryTreeInfo.RenderTree().Split("\n");
 
-            var prompt = new SelectionPrompt<string>()
-            {
+            var prompt = new SelectionPrompt<string>() {
                 Title = header,
                 PageSize = 20,
                 Converter = a => (
                     a[0] == '/'
-                        ? $"[yellow]{a}[/]"
-                        : $"[dodgerblue2]{a}[/] - [green]{FormatLength(directoryTreeInfo.GetFileLength(a))}[/]"
+                        ? $"[yellow]{Markup.Escape(a)}[/]"
+                        : $"[dodgerblue2]{Markup.Escape(a)}[/] - [green]{FormatLength(directoryTreeInfo.GetFileLength(a))}[/]"
                 ),
             }.AddChoices(tree);
 
@@ -40,14 +38,15 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
             if (directoryName[0] != '/')
                 continue;
 
-            if (directoryName == "/..") directoryName = directoryTreeInfo.GetParentFullName();
-            else directoryName = directoryTreeInfo.FullName + directoryName;
-
+            directoryName =
+                directoryName[0..3] == "/.."
+                    ? directoryTreeInfo.GetParentFullName()
+                    : directoryTreeInfo.FullName + directoryName;
             if (string.IsNullOrEmpty(directoryName))
                 continue;
 
-            directoryTreeInfo = new DirectoryTreeInfo(directoryName);
             AnsiConsole.Clear();
+            directoryTreeInfo = new DirectoryTreeInfo(directoryName);
         }
         return 0;
     }
@@ -69,12 +68,12 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
         if (length >= 0 && length <= 1023)
             format = $"{string.Format("{0:0.00}", length)} byte(s)";
         else if (length >= 1024 && length <= 1_048_575)
-            format = $"{string.Format("{0:0.00}", (double)(length / 1024))} kb(s)";
+            format = $"{string.Format("{0:0.00}", (double)(length) / 1024)} kb(s)";
         else if (length >= 1_048_576 && length <= 1_073_741_823)
-            format = $"{string.Format("{0:0.00}", (double)(length / 1_048_576))} mb(s)";
+            format = $"{string.Format("{0:0.00}", (double)(length) / 1_048_576)} mb(s)";
         else if (length >= 1_073_741_824 && length <= 1_099_511_627_775)
-            format = $"{string.Format("{0:0.00}", (double)(length / 1_073_741_824))} gb(s)";
-        else format = $"{string.Format("{0:0.00}", (double)(length / 1_099_511_627_776))} tb(s)";
+            format = $"{string.Format("{0:0.00}", (double)(length) / 1_073_741_824)} gb(s)";
+        else format = $"{string.Format("{0:0.00}", (double)(length) / 1_099_511_627_776)} tb(s)";
 
         return format;
     }

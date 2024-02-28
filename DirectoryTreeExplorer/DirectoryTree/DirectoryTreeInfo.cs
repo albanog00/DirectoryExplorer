@@ -26,20 +26,17 @@ public class DirectoryTreeInfo
 
     private void Init()
     {
-        try
-        {
+        try {
             foreach (var directory in _directoryInfo.GetDirectories())
                 _directories.Add(directory.Name);
 
-            foreach (var file in _directoryInfo.GetFiles())
-            {
+            foreach (var file in _directoryInfo.GetFiles()) {
                 _files[file.Name] = file.Length;
                 Length += file.Length;
             }
         }
-        catch (Exception ex)
-        {
-            AnsiConsole.MarkupLine($"[red]There's been an error:[/] {ex.Message}");
+        catch (Exception ex) {
+            AnsiConsole.MarkupInterpolated($"[red]There's been an error:[/] [bold]{ex.Message}[/]");
         }
     }
 
@@ -48,18 +45,16 @@ public class DirectoryTreeInfo
         var builder = new StringBuilder();
 
         if (_directoryInfo.Parent is not null)
-            builder.AppendLine("/..");
-
+            builder.Append("/..\n");
         foreach (var directory in _directories)
-            builder.AppendLine($"/{Markup.Escape(directory)}");
-
-        foreach (var file in _files)
-            builder.AppendLine($"{Markup.Escape(file.Key)}");
+            builder.AppendFormat("/{0}\n", directory);
+        foreach (var (key, _) in _files)
+            builder.AppendFormat("{0}\n", key);
 
         return builder.ToString().TrimEnd('\n');
     }
 
     public string? GetParentFullName() => _directoryInfo.Parent?.FullName;
 
-    public long GetFileLength(string name) => _files[name];
+    public long GetFileLength(string name) => _files.TryGetValue(name, out long val) ? val : 0;
 }
