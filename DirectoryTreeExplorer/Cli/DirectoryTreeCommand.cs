@@ -55,7 +55,7 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     public string RenderHeader(ref DirectoryTreeInfo directoryTreeInfo)
     {
         var builder = new StringBuilder();
-        builder.AppendLine($"\nCurrent directory: {directoryTreeInfo.FullName}");
+        builder.AppendLine($"\n[bold]Current directory: [lightgoldenrod2_1]{directoryTreeInfo.FullName}[/][/]");
         builder.Append(
             string.Format("{0} [bold][yellow]Directories[/][/], {1} [bold][dodgerblue2]Files[/][/], [bold][green]{2}[/][/] allocated",
                 directoryTreeInfo.DirectoryCount, directoryTreeInfo.FilesCount, FormatLength(directoryTreeInfo.Length)));
