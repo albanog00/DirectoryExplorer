@@ -8,6 +8,10 @@ namespace DirectoryTreeExplorer.Cli;
 
 public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
 {
+    private const string OpenFolderEmoji = Emoji.Known.OpenFileFolder;
+    private const string FolderEmoji = Emoji.Known.FileFolder;
+    private const string FileEmoji = Emoji.Known.PageFacingUp;
+
     public class Settings : CommandSettings
     {
         [Description("Path to search. Default to curren directory")]
@@ -29,8 +33,8 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
                 PageSize = 20,
                 Converter = a => (
                     a[0] == '/'
-                        ? $"[yellow]{Markup.Escape(a)}[/]"
-                        : $"[dodgerblue2]{Markup.Escape(a)}[/] - [green]{FormatLength(directoryTreeInfo.GetFileLength(a))}[/]"
+                        ? $"{OpenFolderEmoji} [yellow]{Markup.Escape(a)}[/]"
+                        : $"{FileEmoji} [dodgerblue2]{Markup.Escape(a)}[/] - [green]{FormatLength(directoryTreeInfo.GetFileLength(a))}[/]"
                 ),
             }.AddChoices(tree);
 
@@ -54,10 +58,18 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     public string RenderHeader(ref DirectoryTreeInfo directoryTreeInfo)
     {
         var builder = new StringBuilder();
-        builder.AppendLine($"\n[bold]Current directory: [lightgoldenrod2_1]{directoryTreeInfo.FullName}[/][/]");
-        builder.Append(
-            string.Format("{0} [bold][yellow]Directories[/][/], {1} [bold][dodgerblue2]Files[/][/], [bold][green]{2}[/][/] allocated",
-                directoryTreeInfo.DirectoryCount, directoryTreeInfo.FilesCount, FormatLength(directoryTreeInfo.Length)));
+        builder
+            .AppendFormat(
+                "\n[bold]Current directory: {0} [lightgoldenrod2_1]{1}[/][/]\n",
+                FolderEmoji,
+                directoryTreeInfo.FullName)
+            .AppendFormat(
+                "{0} {1} [bold][yellow]Directories[/][/], {2} {3} [bold][dodgerblue2]Files[/][/], [bold][green]{4}[/][/] allocated",
+                OpenFolderEmoji,
+                directoryTreeInfo.DirectoryCount,
+                FileEmoji,
+                directoryTreeInfo.FilesCount,
+                FormatLength(directoryTreeInfo.Length));
 
         return builder.ToString();
     }
