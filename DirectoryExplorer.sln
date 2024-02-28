@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirectoryTreeExplorer", "DirectoryTreeExplorer\DirectoryTreeExplorer.csproj", "{6A2BF109-F3F1-49C0-BB2C-CD87C5ACF934}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirectoryExplorer", "DirectoryExplorer\DirectoryExplorer.csproj", "{6A2BF109-F3F1-49C0-BB2C-CD87C5ACF934}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
