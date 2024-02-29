@@ -36,7 +36,7 @@ public class DirectoryTreeInfo
             }
         }
         catch (Exception ex) {
-            AnsiConsole.MarkupInterpolated($"[red]There's been an error:[/] [bold]{ex.Message}[/]");
+            AnsiConsole.WriteException(new Exception(ex.Message));
         }
     }
 
@@ -56,5 +56,5 @@ public class DirectoryTreeInfo
 
     public string? GetParentFullName() => _directoryInfo.Parent?.FullName;
 
-    public long GetFileLength(string name) => _files.TryGetValue(name, out long val) ? val : 0;
+    public long GetFileLength(string name) => _files[name];
 }

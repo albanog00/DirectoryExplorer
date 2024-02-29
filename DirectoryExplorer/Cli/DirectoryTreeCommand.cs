@@ -3,6 +3,7 @@ using Spectre.Console.Cli;
 using DirectoryTreeExplorer.DirectoryTree;
 using System.ComponentModel;
 using System.Text;
+using System.Diagnostics;
 
 namespace DirectoryTreeExplorer.Cli;
 
@@ -11,6 +12,8 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     private const string OpenFolderEmoji = Emoji.Known.OpenFileFolder;
     private const string FolderEmoji = Emoji.Known.FileFolder;
     private const string FileEmoji = Emoji.Known.PageFacingUp;
+
+    private Process? _appToOpenFile = null;
 
     public class Settings : CommandSettings
     {
@@ -22,12 +25,12 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     public override int Execute(CommandContext context, Settings settings)
     {
         AnsiConsole.Clear();
+        var openAppPrompt = new TextPrompt<string>("Insert the executable to open the file: ");
 
         var directoryTreeInfo = new DirectoryTreeInfo(settings.SearchPath);
         while (directoryTreeInfo != null) {
             var header = RenderHeader(ref directoryTreeInfo);
             var tree = directoryTreeInfo.RenderTree().Split("\n");
-
             var prompt = new SelectionPrompt<string>() {
                 Title = header,
                 PageSize = 20,
@@ -39,15 +42,40 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
             }.AddChoices(tree);
 
             var directoryName = AnsiConsole.Prompt(prompt);
-            if (directoryName[0] != '/')
-                continue;
+            var isFile = directoryName[0] != '/';
 
             directoryName =
                 directoryName[0..3] == "/.."
                     ? directoryTreeInfo.GetParentFullName()
-                    : directoryTreeInfo.FullName + directoryName;
+                    : Path.Combine(directoryTreeInfo.FullName, directoryName);
+
             if (string.IsNullOrEmpty(directoryName))
                 continue;
+
+            if (isFile) {
+                AnsiConsole.Clear();
+                if (_appToOpenFile is null) {
+                    var fileName = AnsiConsole.Prompt(openAppPrompt);
+                    _appToOpenFile = new Process() {
+                        StartInfo = {
+                            FileName = "cmd",
+                            Arguments = $"/C {fileName} {directoryName}",
+                        }
+                    };
+                }
+
+                try {
+                    _appToOpenFile.Start();
+                }
+                catch (Exception ex) {
+                    AnsiConsole.WriteLine(ex.Message);
+                    _appToOpenFile = null;
+                    continue;
+                }
+                _appToOpenFile.WaitForExit();
+
+                continue;
+            }
 
             AnsiConsole.Clear();
             directoryTreeInfo = new DirectoryTreeInfo(directoryName);
