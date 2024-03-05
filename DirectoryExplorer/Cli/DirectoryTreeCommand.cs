@@ -35,7 +35,7 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
                 Title = header,
                 PageSize = 20,
                 Converter = a => (
-                    a[0] == '/'
+                    a[0] is '/'
                         ? $"{OpenFolderEmoji} [yellow]{Markup.Escape(a)}[/]"
                         : $"{FileEmoji} [dodgerblue2]{Markup.Escape(a)}[/] - [green]{FormatLength(directoryTreeInfo.GetFileLength(a))}[/]"
                 ),
@@ -44,10 +44,7 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
             var directoryName = AnsiConsole.Prompt(prompt);
             var isFile = directoryName[0] != '/';
 
-            directoryName =
-                directoryName[0..3] == "/.."
-                    ? directoryTreeInfo.GetParentFullName()
-                    : Path.Combine(directoryTreeInfo.FullName, directoryName);
+            directoryName = Path.GetFullPath(directoryTreeInfo.FullName + (isFile ? $"/{directoryName}" : directoryName));
 
             if (string.IsNullOrEmpty(directoryName))
                 continue;
