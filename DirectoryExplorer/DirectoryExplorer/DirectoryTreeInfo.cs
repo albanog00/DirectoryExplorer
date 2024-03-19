@@ -26,16 +26,19 @@ public class DirectoryTreeInfo
 
     private void Init()
     {
-        try {
+        try
+        {
             foreach (var directory in _directoryInfo.GetDirectories())
                 _directories.Add(directory.Name);
 
-            foreach (var file in _directoryInfo.GetFiles()) {
+            foreach (var file in _directoryInfo.GetFiles())
+            {
                 _files[file.Name] = file.Length;
                 Length += file.Length;
             }
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             AnsiConsole.WriteException(new Exception(ex.Message));
         }
     }

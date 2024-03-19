@@ -13,7 +13,7 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     private const string FolderEmoji = Emoji.Known.FileFolder;
     private const string FileEmoji = Emoji.Known.PageFacingUp;
 
-    private Process? _appToOpenFile = null;
+    private string _appNameToOpenFile = string.Empty;
 
     public class Settings : CommandSettings
     {
@@ -24,14 +24,15 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
 
     public override int Execute(CommandContext context, Settings settings)
     {
-        AnsiConsole.Clear();
         var openAppPrompt = new TextPrompt<string>("Insert the executable to open the file: ");
-
         var directoryTreeInfo = new DirectoryTreeInfo(settings.SearchPath);
-        while (directoryTreeInfo != null) {
+
+        while (directoryTreeInfo != null)
+        {
             var header = RenderHeader(ref directoryTreeInfo);
             var tree = directoryTreeInfo.RenderTree().Split("\n");
-            var prompt = new SelectionPrompt<string>() {
+            var prompt = new SelectionPrompt<string>()
+            {
                 Title = header,
                 PageSize = 20,
                 Converter = a => (
@@ -43,39 +44,48 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
 
             var directoryName = AnsiConsole.Prompt(prompt);
             var isFile = directoryName[0] != '/';
-
             directoryName = Path.GetFullPath(directoryTreeInfo.FullName + (isFile ? $"/{directoryName}" : directoryName));
 
             if (string.IsNullOrEmpty(directoryName))
-                continue;
-
-            if (isFile) {
-                AnsiConsole.Clear();
-                if (_appToOpenFile is null) {
-                    var fileName = AnsiConsole.Prompt(openAppPrompt);
-                    _appToOpenFile = new Process() {
-                        StartInfo = {
-                            FileName = "cmd",
-                            Arguments = $"/C {fileName} {directoryName}",
-                        }
-                    };
-                }
-
-                try {
-                    _appToOpenFile.Start();
-                }
-                catch (Exception ex) {
-                    AnsiConsole.WriteLine(ex.Message);
-                    _appToOpenFile = null;
-                    continue;
-                }
-                _appToOpenFile.WaitForExit();
-
+            {
                 continue;
             }
 
+            if (isFile)
+            {
+                if (string.IsNullOrEmpty(_appNameToOpenFile))
+                    _appNameToOpenFile = AnsiConsole.Prompt(openAppPrompt);
+
+                var startInfo = new ProcessStartInfo();
+                if (OperatingSystem.IsWindows())
+                {
+                    startInfo.FileName = "cmd";
+                    startInfo.Arguments = $"/C {_appNameToOpenFile} {directoryName}";
+                }
+                else
+                {
+                    startInfo.FileName = _appNameToOpenFile;
+                    startInfo.Arguments = directoryName;
+                }
+                var process = new Process();
+                process.StartInfo = startInfo;
+
+                try
+                {
+                    process.Start();
+                    process.WaitForExit();
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.WriteLine(ex.Message);
+                    _appNameToOpenFile = string.Empty;
+                }
+            }
+            else
+            {
+                directoryTreeInfo = new DirectoryTreeInfo(directoryName);
+            }
             AnsiConsole.Clear();
-            directoryTreeInfo = new DirectoryTreeInfo(directoryName);
         }
         return 0;
     }
