@@ -17,14 +17,14 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
 
     public class Settings : CommandSettings
     {
-        [Description("Path to search. Default to curren directory")]
+        [Description("Path to search. Default to current directory")]
         [CommandArgument(0, "[searchPath]")]
         public string SearchPath { get; init; } = Directory.GetCurrentDirectory();
     }
 
     public override int Execute(CommandContext context, Settings settings)
     {
-        var openAppPrompt = new TextPrompt<string>("Insert the executable to open the file: ");
+        var openAppPrompt = new TextPrompt<string>("Insert the executable to open the file with: ");
         var directoryTreeInfo = new DirectoryTreeInfo(settings.SearchPath);
 
         while (directoryTreeInfo != null)
@@ -42,33 +42,25 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
                 ),
             }.AddChoices(tree);
 
-            var directoryName = AnsiConsole.Prompt(prompt);
-            var isFile = directoryName[0] != '/';
-            directoryName = Path.GetFullPath(directoryTreeInfo.FullName + (isFile ? $"/{directoryName}" : directoryName));
-
-            if (string.IsNullOrEmpty(directoryName))
-            {
-                continue;
-            }
+            var selected = AnsiConsole.Prompt(prompt);
+            var isFile = selected[0] != '/';
 
             if (isFile)
             {
                 if (string.IsNullOrEmpty(_appNameToOpenFile))
                     _appNameToOpenFile = AnsiConsole.Prompt(openAppPrompt);
 
-                var startInfo = new ProcessStartInfo();
-                if (OperatingSystem.IsWindows())
+                var startInfo = new ProcessStartInfo
                 {
-                    startInfo.FileName = "cmd";
-                    startInfo.Arguments = $"/C {_appNameToOpenFile} {directoryName}";
-                }
-                else
+                    FileName = _appNameToOpenFile,
+                    Arguments = $"./{selected}",
+
+                };
+
+                var process = new Process
                 {
-                    startInfo.FileName = _appNameToOpenFile;
-                    startInfo.Arguments = directoryName;
-                }
-                var process = new Process();
-                process.StartInfo = startInfo;
+                    StartInfo = startInfo
+                };
 
                 try
                 {
@@ -77,15 +69,20 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
                 }
                 catch (Exception ex)
                 {
+                    AnsiConsole.Clear();
                     AnsiConsole.WriteLine(ex.Message);
                     _appNameToOpenFile = string.Empty;
                 }
             }
             else
             {
-                directoryTreeInfo = new DirectoryTreeInfo(directoryName);
+                var selectedFullPath = Path.GetFullPath(directoryTreeInfo.FullName + selected);
+                if (string.IsNullOrEmpty(selectedFullPath))
+                    continue;
+
+                directoryTreeInfo = new DirectoryTreeInfo(selectedFullPath);
+                AnsiConsole.Clear();
             }
-            AnsiConsole.Clear();
         }
         return 0;
     }
@@ -93,6 +90,9 @@ public class DirectoryTreeCommand : Command<DirectoryTreeCommand.Settings>
     public string RenderHeader(ref DirectoryTreeInfo directoryTreeInfo)
     {
         var builder = new StringBuilder();
+        // Helper keymaps
+        builder.AppendLine("\n[invert][grey69]Close (ctrl+c) Up (:up_arrow:) Down (:down_arrow:) Select (Enter)[/][/]");
+
         builder
             .AppendFormat(
                 "\n[bold]Current directory: {0} [lightgoldenrod2_1]{1}[/][/]\n",

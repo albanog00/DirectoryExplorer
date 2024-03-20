@@ -29,7 +29,9 @@ public class DirectoryTreeInfo
         try
         {
             foreach (var directory in _directoryInfo.GetDirectories())
+            {
                 _directories.Add(directory.Name);
+            }
 
             foreach (var file in _directoryInfo.GetFiles())
             {
